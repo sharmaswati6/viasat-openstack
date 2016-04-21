@@ -1,9 +1,0 @@
----
-dnsaas_hosts:
-  infr001-clddev:
-    ip:  10.16.34.6
-  infr002-clddev:
-    ip:  10.16.34.7
-  infr003-clddev:
-    ip:  10.16.34.8
-

@@ -1,0 +1,152 @@
+---
+cidr_networks:
+  container: 10.16.35.0/24
+  tunnel: 10.16.34.128/25
+  storage: 10.16.36.0/25
+
+used_ips:
+  - "10.16.35.1,10.16.35.30"
+  - "10.16.34.129,10.16.34.145"
+  - "10.16.36.1,10.16.36.30"
+
+global_overrides:
+  internal_lb_vip_address: 10.16.34.6
+  external_lb_vip_address: 10.16.34.6
+  tunnel_bridge: "br-vxlan"
+  management_bridge: "br-mgmt"
+  provider_networks:
+    - network:
+        container_bridge: "br-mgmt"
+        container_type: "veth"
+        container_interface: "eth1"
+        ip_from_q: "container"
+        type: "raw"
+        group_binds:
+          - all_containers
+          - hosts
+        is_container_address: true
+        is_ssh_address: true
+    - network:
+        container_bridge: "br-vxlan"
+        container_type: "veth"
+        container_interface: "eth10"
+        ip_from_q: "tunnel"
+        type: "vxlan"
+        range: "1:10000"
+        net_name: "vxlan"
+        group_binds:
+          - neutron_linuxbridge_agent
+    - network:
+        container_bridge: "br-vlan"
+        container_type: "veth"
+        container_interface: "eth11"
+        type: "vlan"
+        range: "1:1"
+        net_name: "vlan"
+        group_binds:
+          - neutron_linuxbridge_agent
+    - network:
+        container_bridge: "br-storage"
+        container_type: "veth"
+        container_interface: "eth2"
+        ip_from_q: "storage"
+        type: "raw"
+        group_binds:
+          - glance_api
+          - cinder_api
+          - cinder_volume
+          - nova_compute
+          - swift_proxy
+
+shared-infra_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+
+os-infra_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+
+storage-infra_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+
+storage_hosts:
+  cind001-clddev:
+    ip: 10.16.34.11
+    container_vars:  
+      cinder_backends:
+        limit_container_types: cinder_volume
+        lvm:
+          volume_backend_name: LVM_iSCSI
+          volume_driver: cinder.volume.drivers.lvm.LVMVolumeDriver
+          volume_group: cinder-volumes
+  cind002-clddev:
+    ip: 10.16.34.12
+    container_vars:
+      cinder_backends:
+        limit_container_types: cinder_volume
+        lvm:
+          volume_backend_name: LVM_iSCSI
+          volume_driver: cinder.volume.drivers.lvm.LVMVolumeDriver
+          volume_group: cinder-volumes
+
+repo-infra_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+
+identity_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+
+compute_hosts:
+  comp001-clddev:
+    ip:  10.16.34.9
+  comp002-clddev:
+    ip:  10.16.34.10
+
+log_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+
+network_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+
+# NEW LINES BEGIN - "VIASAT"
+dnsaas_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6
+  infr002-clddev:
+    ip:  10.16.34.7
+  infr003-clddev:
+    ip:  10.16.34.8
+# NEW LINES END - "VIASAT"
+
+haproxy_hosts:
+  infr001-clddev:
+    ip:  10.16.34.6    
+
