@@ -1,5 +1,5 @@
 # viasat-openstack
-Optional Designate module, that provides DNSaaS services for Rackspace Openstack Private Cloud
+Optional Designate module, that provides DNSaaS feature for Rackspace Openstack Private Cloud
 
 # openstack-ansible Designate Integration
 
@@ -20,42 +20,42 @@ Some of the editted files have the following statements-
 
 Playbooks:
 
-* `os-designate-install.yml` -  NEW file that consists of the Designate components to be installed on the host machines, the designate roles, tasks and vars to be used.
+* `os-designate-install.yml` -  NEW file that consists of the designate components to be installed on the host machines, the designate roles, tasks and vars to be used.
 * `setup-openstack.yml` - includes the reference of the new designate playbook `os-designate-install.yml`
 * `utility-install.yml` - includes the new pip package `python-designateclient` to be installed
 * `run-playbooks.sh` - includes the new designate playbook `os-designate-install.yml`
 * `hosts.yml` - includes the parameters for Designate services
-* `openstack_services.yml` - includes the Designate Git repo reference
+* `openstack_services.yml` - includes the designate Git repo reference
 * `haproxy_config.yml` - includes designate_api haproxy settings
-* `os_designate role` - NEW directory added, consisting of Designate tasks, template files, default connection strings and designate handlers
-* `openrc` - include alias for Designate as well 
+* `os_designate role` - NEW role directory added, consisting of designate tasks, template files, default connection strings and designate handlers
+* `openrc` - includes alias for designate component as well
 
 Scripts:
 
-* `run-playbooks.sh` - includes Designate Playbook reference in this script, for deploying complete openstack-ansible in one go
+* `run-playbooks.sh` - includes designate playbook reference in this script, for deploying complete openstack-ansible in one go
 
 # Openstack_Deploy ('viasatd': Files Explained for the Basic Setup of Designate)
 
 * `conf.d/designate.yml` - includes host/node details for designate
-* `env.d/designate.yml` - includes the container details for Designate and the designate services mapped to each of them
-* `user_extras_secrets.yml` - includes the designate parameter credentials
+* `env.d/designate.yml` - includes the container details for designate and the designate services mapped to each of them
+* `user_extras_secrets.yml` - includes the additional designate parameter credentials
 * `user_variables.yml` - includes the ceilometer setting for designate
-* `openstack_user_config.yml` - includes the node settings added for dnsaas_hosts 
+* `openstack_user_config.yml` - includes the node settings added for dnsaas_hosts
 
 # Add & Edit Designate Files
 
 1. Clone the viasat-openstack repository:
    `cd /opt && git clone --recursive https://github.com/sharmaswati6/viasat-openstack`
 2. Add new designate files-
-   a) `cd viasat-openstack`
-   b) `cp viasatd/etc/openstack_deploy/user_extras_*.yml /etc/openstack_deploy`
-   c) recursively copy the designate configuration files:
+   1. `cd viasat-openstack`
+   2. `cp viasatd/etc/openstack_deploy/user_extras_*.yml /etc/openstack_deploy`
+   3.  recursively copy the designate configuration files:
       `cp -R viasatd/etc/openstack_deploy/conf.d /etc/openstack_deploy/conf.d`
-   d) recursively copy the designate environment setup files:
+   4. recursively copy the designate environment setup files:
       `cp -R viasatd/etc/openstack_deploy/env.d /etc/openstack_deploy/env.d`
-   e) copy designate playbook:
+   5. copy designate playbook:
       `cp viasatd/opt/openstack-ansible/playbooks/os-designate-install.yml /opt/openstack-ansible/playbooks`
-   f) recurisvely copy designate role:
+   6. recurisvely copy designate role:
       `cp -R viasatd/opt/openstack-ansible/playbooks/roles/os_designate /opt/openstack-ansible/playbooks/roles`
 3. `cd /opt/openstack-ansible`
 4. Edit `playbooks/setup-openstack.yml` according to `viasatd/opt/openstack-ansible/playbooks/setup-openstack.yml`
@@ -70,21 +70,21 @@ Scripts:
 
 # Designate Installation Steps with Openstack-Ansible
 
-1. Creates empty designate containers
-   `sudo openstack-ansible setup-hosts.yml`
-   Suppose, new container is created at <infr002_new_designate_container>
+1. Create empty designate containers
+   `sudo openstack-ansible setup-hosts.yml`.
+   (Suppose, new container is created at infr002_new_designate_container)
 2. Setup expected environment for designate
    `sudo openstack-ansible setup-everything.yml --limit=infr002_ new_designate_container`
-   (This will give pip install Error while installing designate) 
-3. `ssh inside infr002 and lxc-attach infr002_ new_designate_container`. Run the following commands to install 'designate' inside this container- 
-   `cd /usr/local/lib/python2.7/dist-packages`
-   `git clone https://github.com/openstack/designate.git`
-   `cd designate`
-   `git checkout stable/liberty`
-   `pip install -r requirements.txt -r test-requirements.txt --isolated`
-   `python setup.py develop `
+   (This will give pip install Error while installing designate)
+3. `ssh inside infr002 and lxc-attach infr002_ new_designate_container`. Run the following commands to install 'designate' inside this container-
+   1. `cd /usr/local/lib/python2.7/dist-packages`
+   2. `git clone https://github.com/openstack/designate.git`
+   3. `cd designate`
+   4. `git checkout stable/liberty`
+   5. `pip install -r requirements.txt -r test-requirements.txt --isolated`
+   6. `python setup.py develop `
 4. Again run, `sudo openstack-ansible setup-everything.yml --limit=infr002_ new_designate_container`
-   (This will install the designate playbook 'os-designate-install.yml' successfully on this new container)
-5. To Run the designate commands on the new designate container, do lxc-attach <infr002_new_designate_container>
-   `source /root/openrc`
-6. Try domain creation: `designate domain-create --name testing123.net. --email me@mydomain.com`
+   (This will install the designate playbook `os-designate-install.yml` successfully on this new container)
+5. To Run the designate commands on the new designate container, do lxc-attach infr002_new_designate_container and run `source /root/openrc`
+6. Try domain creation: `designate domain-create --name testing123.net. --email me@mydomain.com`. (This will successfully create a domain now)
+
