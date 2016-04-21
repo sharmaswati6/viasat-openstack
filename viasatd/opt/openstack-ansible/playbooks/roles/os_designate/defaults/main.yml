@@ -1,0 +1,144 @@
+---
+# Copyright 2015, Rackspace US, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+## Verbosity Options
+debug: False
+verbose: True
+
+# Name of the virtual env to deploy into
+designate_venv_tag: untagged
+designate_venv_bin: "/openstack/venvs/designate-{{ designate_venv_tag }}/bin"
+
+# Set this to enable or disable installing in a venv
+designate_venv_enabled: true
+
+# The bin path defaults to the venv path however if installation in a
+#  venv is disabled the bin path will be dynamically set based on the
+#  system path used when the installing.
+designate_bin: "{{ designate_venv_bin }}"
+
+# Set the etc dir path where designate is installed.
+#  This is used for role access to the db migrations.
+#  Example:
+#  designate_etc_dir: "/usr/local/etc/designate"
+designate_venv_etc_dir: "{{ designate_bin | dirname }}/etc/designate"
+designate_non_venv_etc_dir: "/usr/local/etc/designate"
+designate_etc_dir: "{{ (designate_venv_enabled | bool) | ternary(designate_venv_etc_dir, designate_non_venv_etc_dir) }}"
+
+designate_venv_download_url: http://127.0.0.1/venvs/untagged/ubuntu/designate.tgz
+
+## System info
+designate_system_user_name: designate
+designate_system_group_name: designate
+designate_system_shell: /bin/false
+designate_system_comment: designate system user
+designate_system_user_home: "/var/lib/{{ designate_system_user_name }}"
+
+## Designate RPC
+designate_rpc_backend: rabbit
+
+## DB info
+designate_galera_user: designate
+designate_galera_database: designate 
+
+designate_role_name: admin
+designate_api_bind_address: 0.0.0.0
+designate_api_service_port: 9001
+designate_api_program_name: designate-api
+
+## RabbitMQ info
+designate_rabbitmq_userid: designate
+designate_rabbitmq_vhost: /designate
+
+
+# Enable/Disable Ceilometer
+designate_ceilometer_enabled: False
+
+# Designate API's enabled
+designate_enable_v1_api: true
+designate_enable_v2_api: true
+
+#Designate services info
+designate_role_name: admin
+
+designate_central_program_name: designate-central
+designate_pool_manager_program_name: designate-pool-manager
+designate_mdns_program_name: designate-mdns
+designate_sink_program_name: designate-sink
+designate_api_program_name: designate-api
+
+## Service Type and Data
+designate_service_region: RegionOne
+designate_service_name: designate
+designate_service_port: 9001 
+designate_service_proto: http
+designate_service_type: dns 
+designate_service_description: "DNS as a service"
+designate_service_project_domain_id: default
+designate_service_user_domain_id: default
+designate_service_user_name: designate
+designate_service_tenant_name: service
+designate_service_project_name: service
+designate_service_publicuri_proto: "{{ openstack_service_publicuri_proto | default(designate_service_proto) }}"
+designate_service_adminuri_proto: "{{ openstack_service_adminuri_proto | defaul(designate_service_proto) }}"
+designate_service_internaluri_proto: "{{ openstack_service_internaluri_proto | default(designate_service_proto) }}"
+designate_service_publicuri: "{{ designate_service_publicuri_proto }}://{{ external_lb_vip_address }}:{{ designate_service_port }}"
+designate_service_publicurl: "{{ designate_service_publicuri }}"
+designate_service_internaluri: "{{ designate_service_internaluri_proto }}://{{ internal_lb_vip_address }}:{{ designate_service_port }}"
+designate_service_internalurl: "{{ designate_service_internaluri }}"
+designate_service_adminuri: "{{ designate_service_adminuri_proto }}://{{ internal_lb_vip_address }}:{{ designate_service_port }}"
+designate_service_adminurl: "{{ designate_service_adminuri }}"
+
+designate_service_in_ldap: false
+
+## Keystone authentication middleware
+designate_keystone_auth_plugin: password
+
+# Common apt packages
+designate_apt_packages:
+  - rpcbind
+  - bind9
+  - pdns-server 
+  - pdns-backend-mysql
+
+# designate packages that must be installed before anything else
+designate_requires_pip_packages:
+  - virtualenv
+  - virtualenv-tools
+  - python-keystoneclient # Keystoneclient needed to OSA keystone lib
+  - httplib2
+
+# Common pip packages
+designate_pip_packages:
+  - designate
+  - python-designateclient
+  - MySQL-python
+  - python-memcached
+  - pycrypto
+  - warlock
+
+## Service Names
+designate_service_names:
+  - "designate-api"
+  - "designate-central"
+  - "designate-pool-manager"
+  - "designate-mdns"
+  - "designate-sink"
+
+## Tunable overrides
+designate_policy_overrides: {}
+designate_designate_conf_overrides: {}
+designate_api_paste_ini_overrides: {}
+

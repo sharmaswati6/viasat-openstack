@@ -1,0 +1,197 @@
+---
+# Copyright 2015, Rackspace US, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  tags:
+    - designate-apt-packages
+
+- name: Install apt packages
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items: designate_apt_packages
+  tags:
+    - designate-install
+    - designate-apt-packages
+
+- name: Install pip packages
+  pip:
+    name: "{{ item }}"
+    state: present
+    extra_args: "{{ pip_install_options|default('') }}"
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items:
+    - "{{ designate_pip_packages }}"
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Install requires pip packages
+  pip:
+    name: "{{ item }}"
+    state: present
+    extra_args: "{{ pip_install_options|default('') }}"
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items:
+    - "{{ designate_requires_pip_packages }}"
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Get local venv checksum
+  stat:
+    path: "/var/cache/{{ designate_venv_download_url | basename }}"
+    get_md5: False
+  when: designate_venv_enabled | bool
+  register: local_venv_stat
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+#- name: Get remote venv checksum
+#  uri:
+#    url: "{{ designate_venv_download_url | replace('tgz', 'checksum') }}"
+#    return_content: True
+#  when: designate_venv_enabled | bool
+#  register: remote_venv_checksum
+#  tags:
+#    - designate-install
+#    - designate-pip-packages
+
+- name: Attempt venv download
+  get_url:
+    url: "{{ designate_venv_download_url }}"
+    dest: "/var/cache/{{ designate_venv_download_url | basename }}"
+    force: yes
+  ignore_errors: true
+  register: get_venv
+  when:
+    - designate_venv_enabled | bool
+    - (local_venv_stat.stat.exists == False or
+        {{ local_venv_stat.stat.checksum is defined and local_venv_stat.stat.checksum != remote_venv_checksum.content | trim }})
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Set designate get_venv fact
+  set_fact:
+    designate_get_venv: "{{ get_venv }}"
+  when: designate_venv_enabled | bool
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Remove existing venv
+  file:
+    path: "{{ designate_venv_bin | dirname }}"
+    state: absent
+  when:
+    - designate_venv_enabled | bool
+    - designate_get_venv | changed
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Create designate venv dir
+  file:
+    path: "{{ designate_venv_bin | dirname }}"
+    state: directory
+  when:
+    - designate_venv_enabled | bool
+    - designate_get_venv | changed
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Unarchive pre-built venv
+  unarchive:
+    src: "/var/cache/{{ designate_venv_download_url | basename }}"
+    dest: "{{ designate_venv_bin | dirname }}"
+    copy: "no"
+  when:
+    - designate_venv_enabled | bool
+    - designate_get_venv | changed
+  notify:
+    - Restart designate services
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+- name: Update virtualenv path
+  command: >
+    virtualenv-tools --update-path=auto {{ designate_venv_bin | dirname }}
+  when:
+    - designate_venv_enabled | bool
+    - designate_get_venv | success
+  tags:
+    - designate-install
+    - designate-pip-packages
+
+#- name: Install pip packages (venv)
+#  pip:
+#    name: "{{ item }}"
+#    state: present
+#    virtualenv: "{{ designate_venv_bin | dirname }}"
+#    virtualenv_site_packages: "no"
+#    extra_args: "{{ pip_install_options|default('') }}"
+#  register: install_packages
+#  until: install_packages|success
+#  retries: 5
+#  delay: 2
+#  with_items:
+#    - "{{ designate_pip_packages }}"
+#  when:
+#    - designate_venv_enabled | bool
+#    - designate_get_venv | failed
+#  notify:
+#    - Restart designate services
+#  tags:
+#    - designate-install
+#    - designate-pip-packages
+#
+- name: Install pip packages (no venv)
+  pip:
+    name: "{{ item }}"
+    state: present
+    extra_args: "{{ pip_install_options|default('') }}"
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items:
+    - "{{ designate_pip_packages }}"
+  when: not designate_venv_enabled | bool
+  notify:
+    - Restart designate services
+  tags:
+    - designate-install
+    - designate-pip-packages
