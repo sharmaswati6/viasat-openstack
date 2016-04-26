@@ -88,3 +88,24 @@ Scripts:
 5. To Run the designate commands on the new designate container, do lxc-attach infr002_new_designate_container and run `source /root/openrc`
 6. Try domain creation: `designate domain-create --name testing123.net. --email me@mydomain.com`. (This will successfully create a domain now)
 
+# Designate-Dashboard Plugin Integration
+
+1. Install the designate-dashboard package stable/liberty version inside dist-packages, in the Horizon container
+   `pip install git+https://github.com/openstack/designate-dashboard@stable/liberty`
+
+2. Go to the path `/usr/local/lib/python2.7/dist-packages/designatedashboard` and check if the import statement works on python interpreter
+   
+   Usually, it gives an exception like -
+   'Exception: Versioning for this project requires either an sdist tarball, or access 
+       to an upstream git repository'
+
+   Edit `/designatedashboard/__init__.py` and mention pbr version as `__version__ = '1.0.1'`
+   Check that the import statement should work now.
+   
+   `Note` : DO NOT follow the process of git clone [designate-dashboard](https://github.com/openstack/designate-dashboard) and then running setup.py, as it    will then require this egg folder to be installed on the horizon's venv as well.
+   Verify that the `import designatedashboard` statement should also work from inside `openstack_dashboard`.
+
+3. Copy panel plugin files into your Horizon config.  These files can be found in `designatedashboard/enabled`
+   and should be copied to `openstack-dashboard/openstack_dashboard/local/enabled`.
+
+4. Restart apache2 : `sudo service apache2 restart` and the `designate-dashboard` appears on the Horizon dashboard.
