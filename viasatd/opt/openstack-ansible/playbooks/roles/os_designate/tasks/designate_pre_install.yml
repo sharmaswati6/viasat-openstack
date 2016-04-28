@@ -43,6 +43,7 @@
   with_items:
     - { path: "/openstack", mode: "0755", owner: "root", group: "root" }
     - { path: "/etc/designate" }
+    - { path: "/etc/designate/rootwrap.d", owner: "root", group: "root" }
     - { path: "/etc/sudoers.d", mode: "0755", owner: "root", group: "root" }
     - { path: "/var/cache/designate" }
     - { path: "{{ designate_system_user_home }}" }
